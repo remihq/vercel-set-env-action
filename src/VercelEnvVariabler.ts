@@ -225,6 +225,7 @@ export default class VercelEnvVariabler {
             info(
                 `Value, target, or type for env variable ${existingVariable.key} has found to have changed, updating value`
             );
+            try {
             const patchResponse = await patchEnvVariable(
                 this.vercelClient,
                 this.projectName,
@@ -233,6 +234,12 @@ export default class VercelEnvVariabler {
             );
             if (patchResponse?.data) {
                 info(`${existingVariable.key} updated successfully.`);
+            } else {
+                info(`${JSON.stringify(patchResponse)}`);
+            }
+            } catch (err) {
+                // @ts-ignore
+                info(err.message)
             }
         } else {
             info(`No change found for ${existingVariable.key}, skipping...`);
