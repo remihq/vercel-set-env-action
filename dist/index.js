@@ -84,6 +84,7 @@ class VercelEnvVariabler {
     }
     processEnvVariable(envVariableKey) {
         return __awaiter(this, void 0, void 0, function* () {
+            (0, core_1.info)(`Within processEnvVariable: ${envVariableKey}`);
             const { value, targets, type, gitBranch, } = this.parseAndValidateEnvVariable(envVariableKey);
             const existingVariables = targets.reduce((result, target) => {
                 var _a, _b;
@@ -93,6 +94,7 @@ class VercelEnvVariabler {
                 }
                 return result;
             }, {});
+            (0, core_1.info)(`ExistingVariables: ${JSON.stringify(envVariableKey)}`);
             const existingTargets = Object.keys(existingVariables);
             if (existingTargets.length === 0) {
                 (0, core_1.info)(`No existing variable found for ${envVariableKey}, creating.`);
@@ -179,10 +181,13 @@ class VercelEnvVariabler {
     }
     processPossibleEnvVariableUpdate({ type, value, targets, existingVariables, gitBranch, }) {
         return __awaiter(this, void 0, void 0, function* () {
+            (0, core_1.info)(`Within processPossibleEnvVariableUpdate value is: ${value} and existingVariables: ${JSON.stringify(existingVariables)} and gitBranch is: ${gitBranch}`);
             const existing = Object.values(existingVariables)[0];
+            (0, core_1.info)(`existing is: ${existing}`);
             const existingVariable = Array.isArray(existing)
                 ? existing[0]
                 : existing; // They are all actually the same
+            (0, core_1.info)(`existingVariable is: ${existingVariable}`);
             if (existingVariable.value !== value ||
                 existingVariable.target.length !== targets.length ||
                 existingVariable.type !== type) {

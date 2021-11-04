@@ -90,6 +90,7 @@ export default class VercelEnvVariabler {
     }
 
     private async processEnvVariable(envVariableKey: string) {
+        info(`Within processEnvVariable: ${envVariableKey}`);
         const {
             value,
             targets,
@@ -120,6 +121,7 @@ export default class VercelEnvVariabler {
             >
         );
 
+        info(`ExistingVariables: ${JSON.stringify(envVariableKey)}`);
         const existingTargets = Object.keys(existingVariables);
         if (existingTargets.length === 0) {
             info(`No existing variable found for ${envVariableKey}, creating.`);
@@ -280,11 +282,18 @@ export default class VercelEnvVariabler {
         >;
         gitBranch?: string;
     }) {
+        info(
+            `Within processPossibleEnvVariableUpdate value is: ${value} and existingVariables: ${JSON.stringify(
+                existingVariables
+            )} and gitBranch is: ${gitBranch}`
+        );
         const existing = Object.values(existingVariables)[0];
+        info(`existing is: ${existing}`);
         const existingVariable = Array.isArray(existing)
             ? existing[0]
             : existing; // They are all actually the same
 
+        info(`existingVariable is: ${existingVariable}`);
         if (
             existingVariable.value !== value ||
             existingVariable.target.length !== targets.length ||
