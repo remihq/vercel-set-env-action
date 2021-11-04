@@ -111,13 +111,13 @@ class VercelEnvVariabler {
                     item.gitBranch === gitBranch);
                 if (existingVariablesForEnvVariableKey) {
                     (0, core_1.info)(`Existing variable found for ${envVariableKey} and git branch ${gitBranch}, comparing values.`);
-                    yield this.processPossibleEnvVariableUpdate({
-                        value,
-                        targets,
-                        type,
-                        existingVariables,
-                        gitBranch,
-                    });
+                    // await this.processPossibleEnvVariableUpdate({
+                    //     value,
+                    //     targets,
+                    //     type,
+                    //     existingVariables,
+                    //     gitBranch,
+                    // });
                 }
                 else {
                     yield this.createEnvVariable({

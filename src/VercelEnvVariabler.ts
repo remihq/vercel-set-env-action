@@ -144,13 +144,13 @@ export default class VercelEnvVariabler {
                 info(
                     `Existing variable found for ${envVariableKey} and git branch ${gitBranch}, comparing values.`
                 );
-                await this.processPossibleEnvVariableUpdate({
-                    value,
-                    targets,
-                    type,
-                    existingVariables,
-                    gitBranch,
-                });
+                // await this.processPossibleEnvVariableUpdate({
+                //     value,
+                //     targets,
+                //     type,
+                //     existingVariables,
+                //     gitBranch,
+                // });
             } else {
                 await this.createEnvVariable({
                     key: envVariableKey,

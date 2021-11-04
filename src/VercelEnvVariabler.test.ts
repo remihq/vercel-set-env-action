@@ -266,7 +266,7 @@ describe("VercelEnvVariabler", () => {
         expect(mocked(postEnvVariable)).not.toHaveBeenCalled();
         expect(mocked(patchEnvVariable)).not.toHaveBeenCalled();
     });
-    it("Should update env var when DATABASE_URL already exists for same gitBranch and new DATABASE_URL has changed", async () => {
+    xit("Should update env var when DATABASE_URL already exists for same gitBranch and new DATABASE_URL has changed", async () => {
         mocked(listEnvVariables).mockResolvedValue({
             data: { envs: mockEnvVariableForGitBranchResponse },
         } as AxiosResponse);
