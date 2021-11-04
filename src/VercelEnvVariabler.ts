@@ -91,12 +91,19 @@ export default class VercelEnvVariabler {
 
     private async processEnvVariable(envVariableKey: string) {
         info(`Within processEnvVariable: ${envVariableKey}`);
-        const {
-            value,
-            targets,
-            type,
-            gitBranch,
-        } = this.parseAndValidateEnvVariable(envVariableKey);
+        const parsedResult = this.parseAndValidateEnvVariable(envVariableKey);
+
+        info(`Within parsedResult: ${JSON.stringify(parsedResult)}`);
+        if (this.existingEnvVariables) {
+            info(
+                `this.existingEnvVariables: ${JSON.stringify(
+                    this.existingEnvVariables
+                )}`
+            );
+        }
+
+        const { value, targets, type, gitBranch } = parsedResult;
+
         const existingVariables = targets.reduce(
             (
                 result: Record<
