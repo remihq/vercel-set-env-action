@@ -85,7 +85,12 @@ class VercelEnvVariabler {
     processEnvVariable(envVariableKey) {
         return __awaiter(this, void 0, void 0, function* () {
             (0, core_1.info)(`Within processEnvVariable: ${envVariableKey}`);
-            const { value, targets, type, gitBranch, } = this.parseAndValidateEnvVariable(envVariableKey);
+            const parsedResult = this.parseAndValidateEnvVariable(envVariableKey);
+            (0, core_1.info)(`Within parsedResult: ${JSON.stringify(parsedResult)}`);
+            if (this.existingEnvVariables) {
+                (0, core_1.info)(`this.existingEnvVariables: ${JSON.stringify(this.existingEnvVariables)}`);
+            }
+            const { value, targets, type, gitBranch } = parsedResult;
             const existingVariables = targets.reduce((result, target) => {
                 var _a, _b;
                 const existingVariable = (_b = (_a = this.existingEnvVariables) === null || _a === void 0 ? void 0 : _a[target]) === null || _b === void 0 ? void 0 : _b[envVariableKey];
