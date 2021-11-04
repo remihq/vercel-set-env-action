@@ -39,3 +39,20 @@ export const mockEnvVariablesResponse = [
         updatedBy: null,
     },
 ];
+
+export const mockEnvVariableForGitBranchResponse = [
+    // ...mockEnvVariablesResponse,
+    {
+        type: "encrypted",
+        value: "mysql://1234",
+        target: ["preview"],
+        configurationId: null,
+        gitBranch: "brantchoate/somebranch",
+        id: "oJDi2X30EdeLu6wl",
+        key: "DATABASE_URL",
+        createdAt: 1635986818672,
+        updatedAt: 1635986818672,
+        createdBy: "1234",
+        updatedBy: null,
+    },
+];

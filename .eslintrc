@@ -13,7 +13,12 @@
         "createDefaultProgram": true
     },
     "rules": {
-        "camelcase": "off"
+        "camelcase": "off",
+        "sort-imports": "off",
+        "i18n-text/no-en": "off",
+        "filenames/match-regex": "off",
+        "eslint-comments/no-use": "off",
+        "@typescript-eslint/ban-ts-comment": "off"
     },
     "env": {
         "node": true,

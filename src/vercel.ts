@@ -20,6 +20,7 @@ export interface VercelEnvVariable {
     updatedAt: number;
     createdBy: string;
     updatedBy: string;
+    gitBranch?: string;
 }
 
 export const listEnvVariables = async (

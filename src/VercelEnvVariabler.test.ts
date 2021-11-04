@@ -6,6 +6,7 @@ import {
     ENV_2_VARIABLE_ID,
     ENV_3_VARIABLE_ID,
     mockEnvVariablesResponse,
+    mockEnvVariableForGitBranchResponse,
 } from "./envVariableFixtures";
 
 jest.mock("./vercel.ts", () => {
@@ -50,6 +51,36 @@ describe("VercelEnvVariabler", () => {
     const testProjectName = "test-vercel-project";
     const testAllEnvKeys = "ENV_1,ENV_2,ENV_3,ENV_4";
     const testTeamId = "team_1234";
+
+    it("Should create DATABASE_URL for preview environment and associated gitBranch", async () => {
+        const testGitBranch = "brantchoate/somebranch";
+        process.env.DATABASE_URL = "mysql://1234";
+        process.env.TARGET_DATABASE_URL = "preview";
+        process.env.TYPE_DATABASE_URL = "encrypted";
+        process.env.GIT_BRANCH_DATABASE_URL = testGitBranch;
+
+        const variabler = new VercelEnvVariabler(
+            testToken,
+            testProjectName,
+            "DATABASE_URL",
+            testTeamId
+        );
+
+        await variabler.populateExistingEnvVariables();
+        await variabler.processEnvVariables();
+
+        expect(mocked(postEnvVariable)).toHaveBeenCalledWith(
+            expect.anything(),
+            testProjectName,
+            expect.objectContaining({
+                value: expect.anything(),
+                target: ["preview"],
+                type: expect.anything(),
+                gitBranch: testGitBranch,
+            })
+        );
+        expect(mocked(patchEnvVariable)).not.toHaveBeenCalled();
+    });
 
     it("Should build an instance of the class", () => {
         const variabler = new VercelEnvVariabler(
@@ -178,5 +209,37 @@ describe("VercelEnvVariabler", () => {
 
         expect(mocked(postEnvVariable)).toHaveBeenCalledTimes(1);
         expect(mocked(patchEnvVariable)).toHaveBeenCalledTimes(2);
+    });
+    it("Should create DATABASE_URL for preview environment and associated gitBranch when DATABASE_URL already exists for other gitBranch", async () => {
+        mocked(listEnvVariables).mockResolvedValue({
+            data: { envs: mockEnvVariableForGitBranchResponse },
+        } as AxiosResponse);
+        const testGitBranch = "danconger/someotherbranch";
+        process.env.DATABASE_URL = "mysql://5678";
+        process.env.TARGET_DATABASE_URL = "preview";
+        process.env.TYPE_DATABASE_URL = "encrypted";
+        process.env.GIT_BRANCH_DATABASE_URL = testGitBranch;
+
+        const variabler = new VercelEnvVariabler(
+            testToken,
+            testProjectName,
+            "DATABASE_URL",
+            testTeamId
+        );
+
+        await variabler.populateExistingEnvVariables();
+        await variabler.processEnvVariables();
+
+        expect(mocked(postEnvVariable)).toHaveBeenCalledWith(
+            expect.anything(),
+            testProjectName,
+            expect.objectContaining({
+                value: expect.anything(),
+                target: ["preview"],
+                type: expect.anything(),
+                gitBranch: testGitBranch,
+            })
+        );
+        expect(mocked(patchEnvVariable)).not.toHaveBeenCalled();
     });
 });

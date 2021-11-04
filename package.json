@@ -8,10 +8,11 @@
         "build": "tsc",
         "format": "prettier --write **/*.ts",
         "format-check": "prettier --check **/*.ts",
-        "lint": "eslint src/**/*.ts",
+        "lint": "eslint src/**/*.ts --fix",
         "package": "ncc build --source-map --license licenses.txt",
         "test": "jest --passWithNoTests",
-        "all": "npm run build && npm run format && npm run package && npm test"
+        "test:watch": "jest --passWithNoTests --watch",
+        "all": "npm run build && npm run format && npm run lint && npm run package && npm test"
     },
     "repository": {
         "type": "git",

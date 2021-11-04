@@ -22,8 +22,8 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.VALID_TARGETS = exports.VALID_TYPES = void 0;
 const axios_1 = __importDefault(__webpack_require__(6545));
-const core_1 = __webpack_require__(2186);
 const vercel_1 = __webpack_require__(5875);
+const core_1 = __webpack_require__(2186);
 exports.VALID_TYPES = ["encrypted", "plain"];
 exports.VALID_TARGETS = [
     vercel_1.VercelEnvVariableTarget.Production,
@@ -65,8 +65,11 @@ class VercelEnvVariabler {
                 (0, core_1.info)(`Found ${env.length} existing env variables`);
                 for (const existingEnvVariable of env) {
                     for (const existingTarget of existingEnvVariable.target) {
-                        const preExistingVariablesForTarget = (_b = this.existingEnvVariables[existingTarget]) !== null && _b !== void 0 ? _b : {};
-                        this.existingEnvVariables[existingTarget] = Object.assign(Object.assign({}, preExistingVariablesForTarget), { [existingEnvVariable.key]: existingEnvVariable });
+                        const preExistingVariablesForTarget = (_b = this
+                            .existingEnvVariables[existingTarget]) !== null && _b !== void 0 ? _b : [{}];
+                        this.existingEnvVariables[existingTarget] = Object.assign(Object.assign({}, preExistingVariablesForTarget), { [existingEnvVariable.key]: existingTarget === "preview"
+                                ? [existingEnvVariable]
+                                : existingEnvVariable });
                     }
                 }
             }
@@ -81,7 +84,7 @@ class VercelEnvVariabler {
     }
     processEnvVariable(envVariableKey) {
         return __awaiter(this, void 0, void 0, function* () {
-            const { value, targets, type } = this.parseAndValidateEnvVariable(envVariableKey);
+            const { value, targets, type, gitBranch, } = this.parseAndValidateEnvVariable(envVariableKey);
             const existingVariables = targets.reduce((result, target) => {
                 var _a, _b;
                 const existingVariable = (_b = (_a = this.existingEnvVariables) === null || _a === void 0 ? void 0 : _a[target]) === null || _b === void 0 ? void 0 : _b[envVariableKey];
@@ -98,7 +101,26 @@ class VercelEnvVariabler {
                     value,
                     targets,
                     type,
+                    gitBranch,
                 });
+            }
+            else if (existingTargets.includes("preview") && gitBranch) {
+                const existingVariablesForPreviewEnv = existingVariables["preview"];
+                const existingVariablesForEnvVariableKey = existingVariablesForPreviewEnv.find((item) => item.key === envVariableKey &&
+                    item.gitBranch &&
+                    item.gitBranch === gitBranch);
+                if (existingVariablesForEnvVariableKey) {
+                    (0, core_1.info)(`Found variable for ${envVariableKey} and ${gitBranch} already so skipping.`);
+                }
+                else {
+                    yield this.createEnvVariable({
+                        key: envVariableKey,
+                        value,
+                        targets,
+                        type,
+                        gitBranch,
+                    });
+                }
             }
             else {
                 (0, core_1.info)(`Existing variable found for ${envVariableKey}, comparing values.`);
@@ -107,6 +129,7 @@ class VercelEnvVariabler {
                     targets,
                     type,
                     existingVariables,
+                    gitBranch,
                 });
             }
         });
@@ -114,6 +137,7 @@ class VercelEnvVariabler {
     parseAndValidateEnvVariable(envVariableKey) {
         const value = process.env[envVariableKey];
         const targetString = process.env[`TARGET_${envVariableKey}`];
+        const gitBranch = process.env[`GIT_BRANCH_${envVariableKey}`];
         const type = process.env[`TYPE_${envVariableKey}`];
         if (!value) {
             throw new Error(`Variable ${envVariableKey} is missing env variable: ${envVariableKey}`);
@@ -124,6 +148,9 @@ class VercelEnvVariabler {
         if (!type) {
             throw new Error(`Variable ${envVariableKey} is missing env variable: ${`TYPE_${envVariableKey}`}`);
         }
+        if (gitBranch && targetString !== "preview") {
+            throw new Error("You cannot use gitBranch for anything other than preview target environment");
+        }
         if (!exports.VALID_TYPES.includes(type)) {
             throw new Error(`No valid type found for ${envVariableKey}, type given: ${type}, valid types: ${exports.VALID_TYPES.join(",")}`);
         }
@@ -133,26 +160,38 @@ class VercelEnvVariabler {
         if (targets.length === 0) {
             throw new Error(`No valid targets found for ${envVariableKey}, targets given: ${targetString}, valid targets: ${exports.VALID_TARGETS.join(",")}`);
         }
-        return { value, targets, type };
+        return { value, targets, type, gitBranch };
     }
-    createEnvVariable({ type, key, value, targets, }) {
+    createEnvVariable({ type, key, value, targets, gitBranch, }) {
         return __awaiter(this, void 0, void 0, function* () {
-            const createResponse = yield (0, vercel_1.postEnvVariable)(this.vercelClient, this.projectName, { type, key, value, target: targets });
+            const createResponse = yield (0, vercel_1.postEnvVariable)(this.vercelClient, this.projectName, { type, key, value, target: targets, gitBranch });
             if (!(createResponse === null || createResponse === void 0 ? void 0 : createResponse.data)) {
                 (0, core_1.info)(`Variable ${key} with targets ${targets.join(",")} created successfully`);
             }
         });
     }
-    processPossibleEnvVariableUpdate({ type, value, targets, existingVariables, }) {
+    processPossibleEnvVariableUpdate({ type, value, targets, existingVariables, gitBranch, }) {
         return __awaiter(this, void 0, void 0, function* () {
-            const existingVariable = Object.values(existingVariables)[0]; // They are all actually the same
+            const existing = Object.values(existingVariables)[0];
+            const existingVariable = Array.isArray(existing)
+                ? existing[0]
+                : existing; // They are all actually the same
             if (existingVariable.value !== value ||
                 existingVariable.target.length !== targets.length ||
                 existingVariable.type !== type) {
                 (0, core_1.info)(`Value, target, or type for env variable ${existingVariable.key} has found to have changed, updating value`);
-                const patchResponse = yield (0, vercel_1.patchEnvVariable)(this.vercelClient, this.projectName, existingVariable.id, { type, value, target: targets });
-                if (patchResponse === null || patchResponse === void 0 ? void 0 : patchResponse.data) {
-                    (0, core_1.info)(`${existingVariable.key} updated successfully.`);
+                try {
+                    const patchResponse = yield (0, vercel_1.patchEnvVariable)(this.vercelClient, this.projectName, existingVariable.id, { type, value, target: targets, gitBranch });
+                    if (patchResponse === null || patchResponse === void 0 ? void 0 : patchResponse.data) {
+                        (0, core_1.info)(`${existingVariable.key} updated successfully.`);
+                    }
+                    else {
+                        (0, core_1.info)(`${JSON.stringify(patchResponse)}`);
+                    }
+                }
+                catch (err) {
+                    // @ts-ignore
+                    (0, core_1.info)(err.message);
                 }
             }
             else {
