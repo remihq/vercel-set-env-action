@@ -1,5 +1,6 @@
 export const ENV_2_VARIABLE_ID = "XhHeMKBSPqa42soM";
 export const ENV_3_VARIABLE_ID = "XhHeMKBSPqa42soN";
+export const DATABASE_URL_VARIABLE_ID = "ThHeMKBSPqa42soN";
 
 export const mockEnvVariablesResponse = [
     {
@@ -48,7 +49,7 @@ export const mockEnvVariableForGitBranchResponse = [
         target: ["preview"],
         configurationId: null,
         gitBranch: "brantchoate/somebranch",
-        id: "oJDi2X30EdeLu6wl",
+        id: DATABASE_URL_VARIABLE_ID,
         key: "DATABASE_URL",
         createdAt: 1635986818672,
         updatedAt: 1635986818672,

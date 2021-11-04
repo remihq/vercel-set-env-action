@@ -5,6 +5,7 @@ import { AxiosResponse } from "axios";
 import {
     ENV_2_VARIABLE_ID,
     ENV_3_VARIABLE_ID,
+    DATABASE_URL_VARIABLE_ID,
     mockEnvVariablesResponse,
     mockEnvVariableForGitBranchResponse,
 } from "./envVariableFixtures";
@@ -241,5 +242,61 @@ describe("VercelEnvVariabler", () => {
             })
         );
         expect(mocked(patchEnvVariable)).not.toHaveBeenCalled();
+    });
+    it("Should not make call to vercel for env var when DATABASE_URL already exists for same gitBranch and env var has not changed", async () => {
+        mocked(listEnvVariables).mockResolvedValue({
+            data: { envs: mockEnvVariableForGitBranchResponse },
+        } as AxiosResponse);
+        const testGitBranch = "brantchoate/somebranch";
+        process.env.DATABASE_URL = "mysql://1234";
+        process.env.TARGET_DATABASE_URL = "preview";
+        process.env.TYPE_DATABASE_URL = "encrypted";
+        process.env.GIT_BRANCH_DATABASE_URL = testGitBranch;
+
+        const variabler = new VercelEnvVariabler(
+            testToken,
+            testProjectName,
+            "DATABASE_URL",
+            testTeamId
+        );
+
+        await variabler.populateExistingEnvVariables();
+        await variabler.processEnvVariables();
+
+        expect(mocked(postEnvVariable)).not.toHaveBeenCalled();
+        expect(mocked(patchEnvVariable)).not.toHaveBeenCalled();
+    });
+    it("Should update env var when DATABASE_URL already exists for same gitBranch and new DATABASE_URL has changed", async () => {
+        mocked(listEnvVariables).mockResolvedValue({
+            data: { envs: mockEnvVariableForGitBranchResponse },
+        } as AxiosResponse);
+        const testGitBranch = "brantchoate/somebranch";
+        process.env.DATABASE_URL = "mysql://notsameasexisting";
+        process.env.TARGET_DATABASE_URL = "preview";
+        process.env.TYPE_DATABASE_URL = "encrypted";
+        process.env.GIT_BRANCH_DATABASE_URL = testGitBranch;
+
+        const variabler = new VercelEnvVariabler(
+            testToken,
+            testProjectName,
+            "DATABASE_URL",
+            testTeamId
+        );
+
+        await variabler.populateExistingEnvVariables();
+        await variabler.processEnvVariables();
+
+        expect(mocked(postEnvVariable)).not.toHaveBeenCalled();
+        expect(mocked(patchEnvVariable)).toHaveBeenCalledWith(
+            expect.anything(),
+            testProjectName,
+            DATABASE_URL_VARIABLE_ID,
+            expect.objectContaining({
+                value: expect.anything(),
+                target: ["preview"],
+                type: expect.anything(),
+                gitBranch: testGitBranch,
+            })
+        );
     });
 });
