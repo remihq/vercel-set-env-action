@@ -67,9 +67,10 @@ class VercelEnvVariabler {
                     for (const existingTarget of existingEnvVariable.target) {
                         const preExistingVariablesForTarget = (_b = this
                             .existingEnvVariables[existingTarget]) !== null && _b !== void 0 ? _b : [{}];
-                        this.existingEnvVariables[existingTarget] = Object.assign(Object.assign({}, preExistingVariablesForTarget), { [existingEnvVariable.key]: existingTarget === "preview"
-                                ? [existingEnvVariable]
-                                : existingEnvVariable });
+                        const existingEnvVarKeyValue = existingTarget === "preview"
+                            ? this.handlePreviewExistingEnvVariables(existingEnvVariable, preExistingVariablesForTarget[existingEnvVariable.key])
+                            : existingEnvVariable;
+                        this.existingEnvVariables[existingTarget] = Object.assign(Object.assign({}, preExistingVariablesForTarget), { [existingEnvVariable.key]: existingEnvVarKeyValue });
                     }
                 }
             }
@@ -81,6 +82,22 @@ class VercelEnvVariabler {
                 yield this.processEnvVariable(envVariableKey);
             }
         });
+    }
+    handlePreviewExistingEnvVariables(vercelEnvVariable, preExistingVariablesForTarget) {
+        if (!preExistingVariablesForTarget) {
+            return [vercelEnvVariable];
+        }
+        else {
+            if (vercelEnvVariable.gitBranch) {
+                const lastIndex = preExistingVariablesForTarget.findIndex((item) => item.gitBranch &&
+                    item.gitBranch === vercelEnvVariable.gitBranch);
+                return [
+                    ...preExistingVariablesForTarget,
+                    ...(lastIndex === -1 ? [vercelEnvVariable] : []),
+                ];
+            }
+            return [...preExistingVariablesForTarget, vercelEnvVariable];
+        }
     }
     processEnvVariable(envVariableKey) {
         return __awaiter(this, void 0, void 0, function* () {

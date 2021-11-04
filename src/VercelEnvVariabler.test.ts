@@ -299,4 +299,52 @@ describe("VercelEnvVariabler", () => {
             })
         );
     });
+    describe("populateExistingEnvVariables", () => {
+        it("Should format correctly", async () => {
+            mocked(listEnvVariables).mockResolvedValue({
+                data: {
+                    envs: [
+                        {
+                            type: "encrypted",
+                            value: "mysql://1234",
+                            target: ["preview"],
+                            configurationId: null,
+                            gitBranch: "dan/checkly",
+                            id: "eXfcJVWXeJmLXyQ0",
+                            key: "DATABASE_URL",
+                            createdAt: 1636050171459,
+                            updatedAt: 1636050171459,
+                            createdBy: "WymTgfYdY5koDeVWUOXMl2z0",
+                            updatedBy: null,
+                        },
+                        {
+                            type: "encrypted",
+                            value: "mysql://5678",
+                            target: ["preview"],
+                            configurationId: null,
+                            gitBranch:
+                                "brant/rem-380-handle-dynamic-brand-color",
+                            id: "9U39h7zxK9Amm0tu",
+                            key: "DATABASE_URL",
+                            createdAt: 1636045618623,
+                            updatedAt: 1636045618623,
+                            createdBy: "WymTgfYdY5koDeVWUOXMl2z0",
+                            updatedBy: null,
+                        },
+                    ],
+                },
+            } as AxiosResponse);
+            const variabler = new VercelEnvVariabler(
+                testToken,
+                testProjectName,
+                testAllEnvKeys,
+                testTeamId
+            );
+
+            await variabler.populateExistingEnvVariables();
+            expect(
+                variabler.existingEnvVariables["preview"]["DATABASE_URL"]
+            ).toHaveLength(2);
+        });
+    });
 });

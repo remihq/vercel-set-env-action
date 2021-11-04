@@ -21,7 +21,7 @@ export default class VercelEnvVariabler {
     private envVariableKeys = new Array<string>();
     private vercelClient: AxiosInstance;
 
-    private existingEnvVariables: Record<
+    existingEnvVariables: Record<
         VercelEnvVariableTarget,
         Record<string, VercelEnvVariable | VercelEnvVariable[]>
     > = { production: {}, preview: {}, development: {} };
@@ -71,12 +71,19 @@ export default class VercelEnvVariabler {
                 for (const existingTarget of existingEnvVariable.target) {
                     const preExistingVariablesForTarget = this
                         .existingEnvVariables[existingTarget] ?? [{}];
+
+                    const existingEnvVarKeyValue =
+                        existingTarget === "preview"
+                            ? this.handlePreviewExistingEnvVariables(
+                                  existingEnvVariable,
+                                  preExistingVariablesForTarget[
+                                      existingEnvVariable.key
+                                  ]
+                              )
+                            : existingEnvVariable;
                     this.existingEnvVariables[existingTarget] = {
                         ...preExistingVariablesForTarget,
-                        [existingEnvVariable.key]:
-                            existingTarget === "preview"
-                                ? [existingEnvVariable]
-                                : existingEnvVariable,
+                        [existingEnvVariable.key]: existingEnvVarKeyValue,
                     };
                 }
             }
@@ -86,6 +93,28 @@ export default class VercelEnvVariabler {
     public async processEnvVariables(): Promise<void> {
         for (const envVariableKey of this.envVariableKeys) {
             await this.processEnvVariable(envVariableKey);
+        }
+    }
+
+    private handlePreviewExistingEnvVariables(
+        vercelEnvVariable: VercelEnvVariable,
+        preExistingVariablesForTarget?: any
+    ): VercelEnvVariable[] {
+        if (!preExistingVariablesForTarget) {
+            return [vercelEnvVariable];
+        } else {
+            if (vercelEnvVariable.gitBranch) {
+                const lastIndex = preExistingVariablesForTarget.findIndex(
+                    (item: VercelEnvVariable) =>
+                        item.gitBranch &&
+                        item.gitBranch === vercelEnvVariable.gitBranch
+                );
+                return [
+                    ...preExistingVariablesForTarget,
+                    ...(lastIndex === -1 ? [vercelEnvVariable] : []),
+                ];
+            }
+            return [...preExistingVariablesForTarget, vercelEnvVariable];
         }
     }
 
